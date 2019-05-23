@@ -11,16 +11,15 @@ namespace SuperShooter
 
         public int health = 100;
         public int damage = 25;
-        float timer;
-        public float timeBetweenAttacks = 1f;
 
-        public Transform playPos;
+        public float attackDelay = 10;
+        float lastAttacked = -10;
+
+        public FPSController player;
+        public Transform target;
         private NavMeshAgent nav;
+        float targetDistance;
 
-        public GameObject player;
-
-        bool playerInRange;
- 
         // ------------------------------------------------- //
 
         public void DealDamage(int amount)
@@ -35,67 +34,48 @@ namespace SuperShooter
 
 
         // ------------------------------------------------- //
-        public void Awake()
+        public void Start()
         {
-            player = GameObject.FindGameObjectWithTag("Player");
             nav = GetComponent<NavMeshAgent>();
         }
 
-        private void OnTriggerEnter(Collider col)
-        {
-            if (col.gameObject.tag == ("Player"))
-            {
-                
-                print("yes!!");
-                playerInRange = true;
-            }
-        }
-        void OnTriggerExit(Collider other)
-        {
-            // If the exiting collider is the player...
-            if (other.gameObject.tag == "Player")
-            {
-                // ... the player is no longer in range.
-                playerInRange = false;
-            }
 
-        }
         void Update()
         {
-            nav.SetDestination(playPos.position);
-            // Add the time since Update was last called to the timer.
-            timer += Time.deltaTime;
-
-            // If the timer exceeds the time between attacks, the player is in range and this enemy is alive...
-            if (timer >= timeBetweenAttacks && playerInRange) // && enemyHealth.currentHealth > 0
+            if (targetDistance < 30f)
             {
-                // ... attack.
+                nav.SetDestination(target.position);
+            }
+
+            targetDistance = Vector3.Distance(target.position, transform.position);
+            if (targetDistance < 1.4f)
+            {
                 Attack();
             }
-
-            // If the player has zero or less health...
-            if (health <= 0)
-            {
-                // ... tell the animator the player is dead.
-                //  anim.SetTrigger("PlayerDead");
-            }
         }
-
-
-        void Attack()
+        public void Attack()
         {
-            // Reset the timer.
-            timer = 0f;
-
-            // If the player has health to lose...
-            if (health > 0)
+            RaycastHit hit;
+            if (Physics.Raycast(transform.position, transform.TransformDirection(Vector3.forward), out hit))
             {
-                // ... damage the player.
-                DealDamage(damage);
+                if (hit.collider.gameObject.tag == "Player")
+                {
+
+                    if (Time.time > lastAttacked + attackDelay)
+                    {
+
+                        if (player.health > 0)
+                        {
+                            player.TakeDamage(10); //make player take damage    
+                        }
+                        lastAttacked = Time.time;
+                    }
+                }
             }
+
+
+
+
         }
     }
-
-
-    }
-
+}
